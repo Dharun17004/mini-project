@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌍 Pro Translator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: linear-gradient(135deg,#0ea5e9 0%, #22d3ee 50%, #60a5fa 100%);
+      --card-bg: rgba(255,255,255,0.6);
+      --card-border: rgba(255,255,255,0.35);
+      --text: #0b1220;
+      --muted:#4b5563;
+      --primary:#0ea5e9;
+      --accent:#16a34a;
+      --danger:#ef4444;
+      --shadow: 0 10px 30px rgba(2,6,23,.15);
+    }
+    body.dark{
+      --bg: radial-gradient(1200px 700px at 10% -10%, #0ea5e9 0%, transparent 40%), radial-gradient(900px 600px at 110% 10%, #7c3aed 0%, transparent 35%), #0b1220;
+      --card-bg: rgba(17,24,39,0.6);
+      --card-border: rgba(255,255,255,0.08);
+      --text: #e5e7eb;
+      --muted:#9ca3af;
+      --primary:#38bdf8;
+      --accent:#22c55e;
+      --danger:#f87171;
+      --shadow: 0 12px 36px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text); background:var(--bg); background-attachment: fixed;
+      display:flex; min-height:100vh;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width: 260px; backdrop-filter: blur(10px);
+      background: var(--card-bg); border-right:1px solid var(--card-border);
+      padding: 24px 18px; position: sticky; top:0; height:100vh;
+      box-shadow: var(--shadow);
+    }
+    .brand{display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.2rem; letter-spacing:.2px}
+    .brand .logo{
+      width:40px; height:40px; border-radius:12px;
+      background: linear-gradient(135deg,#22d3ee,#60a5fa); display:grid; place-items:center; color:#fff; font-weight:800;
+      box-shadow: inset 0 0 10px rgba(255,255,255,.3);
+    }
+    .nav{margin-top:24px; display:grid; gap:8px}
+    .nav button{
+      all:unset; display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:10px; cursor:pointer; color:var(--text);
+    }
+    .nav button:hover, .nav button.active{background:rgba(255,255,255,.25)}
+    .nav .icon{width:20px}
+
+    .bottom{position:absolute; left:18px; right:18px; bottom:18px; display:flex; gap:10px}
+    .chip{
+      flex:1; text-align:center; padding:10px 12px; border-radius:10px; border:1px solid var(--card-border);
+      background:rgba(255,255,255,.18); cursor:pointer;
+    }
+
+    /* Main content */
+    .main{flex:1; padding:28px; max-width:1400px; margin:0 auto; width:100%}
+    .header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;
+    }
+    .header h1{margin:0; font-size:1.5rem}
+    .actions{display:flex; gap:10px; align-items:center}
+    .btn{
+      border:none; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer;
+      background:#fff; color:#0b1220; box-shadow:var(--shadow)
+    }
+    .btn.primary{background:var(--primary); color:#fff}
+    .btn.accent{background:var(--accent); color:#fff}
+    .btn.ghost{background:transparent; border:1px solid var(--card-border); color:var(--text)}
+    .btn.icon{width:42px; height:42px; display:grid; place-items:center; padding:0}
+
+    /* Glass cards */
+    .card{
+      background: var(--card-bg); border:1px solid var(--card-border);
+      border-radius:20px; padding:18px; box-shadow:var(--shadow); backdrop-filter: blur(12px);
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+
+    /* Layout grid */
+    .grid{
+      display:grid; gap:18px; grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    .section-title{margin:0 0 10px 0; font-size:.95rem; letter-spacing:.3px; opacity:.85}
+
+    /* Input / Output areas */
+    textarea{
+      width:100%; min-height:160px; resize:vertical;
+      border-radius:16px; border:1px solid var(--card-border);
+      padding:12px 14px; font-size:1rem; background:rgba(255,255,255,.5); color:var(--text);
+    }
+    body.dark textarea{background:rgba(255,255,255,.06)}
+    .lang-row{display:flex; gap:10px; align-items:center; margin-bottom:10px}
+    .select{
+      position:relative; flex:1;
+    }
+    select{
+      width:100%; padding:12px 40px 12px 42px; border-radius:14px; border:1px solid var(--card-border);
+      background:rgba(255,255,255,.6); color:var(--text); appearance:none; font-weight:600
+    }
+    body.dark select{background:rgba(255,255,255,.06)}
+    .flag{
+      position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:18px
+    }
+    .chev{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%); opacity:.6; pointer-events:none
+    }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row .btn{flex: none}
+
+    /* Mic button + ripple */
+    .mic{
+      width:50px; height:50px; border-radius:50%; border:none; cursor:pointer; color:#fff; font-size:20px;
+      background:linear-gradient(135deg,#ef4444,#f97316); position:relative; overflow:hidden; box-shadow:var(--shadow)
+    }
+    .mic.listening::after{
+      content:""; position:absolute; inset:0; border-radius:50%;
+      animation:ripple 1.2s ease-out infinite; border: 2px solid rgba(255,255,255,.55);
+    }
+    @keyframes ripple{from{transform:scale(1); opacity:.9} to{transform:scale(1.6); opacity:0}}
+
+    /* Output text box */
+    .output{
+      min-height:160px; border-radius:16px; border:1px solid var(--card-border);
+      padding:14px; background:rgba(255,255,255,.45); font-size:1.05rem; white-space:pre-wrap
+    }
+    body.dark .output{background:rgba(255,255,255,.06)}
+
+    /* Progress bar */
+    .progress{height:6px; width:100%; border-radius:999px; background:rgba(255,255,255,.35); overflow:hidden; display:none}
+    .bar{height:100%; width:30%; background:linear-gradient(90deg, #22d3ee, #60a5fa); border-radius:999px; animation: load 1s linear infinite}
+    @keyframes load{from{transform:translateX(-100%)} to{transform:translateX(400%)}}
+
+    /* Status pills */
+    .status{
+      padding:8px 12px; border-radius:999px; font-weight:700; font-size:.8rem; display:inline-flex; align-items:center; gap:8px
+    }
+    .status.info{background:rgba(34,211,238,.18); color:#055160; border:1px solid rgba(34,211,238,.35)}
+    .status.error{background:rgba(248,113,113,.18); color:#7f1d1d; border:1px solid rgba(248,113,113,.35)}
+    .status.warn{background:rgba(250,204,21,.2); color:#713f12; border:1px solid rgba(250,204,21,.35)}
+
+    /* History timeline */
+    .timeline{max-height:360px; overflow:auto; padding-left:8px}
+    .tl-item{position:relative; padding-left:26px; margin:14px 0}
+    .tl-item::before{
+      content:""; position:absolute; left:8px; top:6px; width:10px; height:10px; background:var(--primary); border-radius:50%;
+      box-shadow:0 0 0 4px rgba(56,189,248,.25);
+    }
+    .tl-time{font-size:.75rem; color:var(--muted); margin-bottom:4px}
+    .tl-body{background:rgba(255,255,255,.45); border:1px solid var(--card-border); border-radius:12px; padding:10px}
+    body.dark .tl-body{background:rgba(255,255,255,.06)}
+    .tl-src{font-weight:700; opacity:.8}
+    .filter{display:flex; gap:8px; margin-top:8px}
+
+    /* Sections toggle (Home/History/Settings) */
+    .hide{display:none}
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">🌐</div>
+      <div>Pro Translator</div>
+    </div>
+
+    <div class="nav">
+      <button class="active" data-section="home"><span class="icon">🏠</span>Home</button>
+      <button data-section="history"><span class="icon">🕘</span>History</button>
+      <button data-section="settings"><span class="icon">⚙️</span>Settings</button>
+    </div>
+
+    <div class="bottom">
+      <div class="chip" id="toggleTheme">🌙 Theme</div>
+      <div class="chip" id="clearAll">🧹 Clear</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="header">
+      <h1>Translate smarter. Sound natural.</h1>
+      <div class="actions">
+        <span id="statusPill" class="status info">Ready</span>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <section id="home" class="card">
+      <div class="grid">
+        <!-- Input Card -->
+        <div>
+          <p class="section-title">Input</p>
+          <div class="lang-row">
+            <div class="select">
+              <span class="flag" id="flagSrc">🌐</span>
+              <select id="sourceLang"></select>
+              <span class="chev">▾</span>
+            </div>
+            <button class="mic" id="micBtn" title="Voice input">🎤</button>
+          </div>
+          <textarea id="inputText" placeholder="Type or speak your text..."></textarea>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn ghost" id="swapBtn" title="Swap languages">⇄ Swap</button>
+            <button class="btn primary" id="translateBtn">Translate</button>
+          </div>
+
+          <div class="progress" id="progress"><div class="bar"></div></div>
+        </div>
+
+        <!-- Output Card -->
+        <div>
+          <p class="section-title">Output</p>
+          <div class="lang-row">
+            <div class="select">
+              <span class="flag" id="flagDst">🌐</span>
+              <select id="targetLang"></select>
+              <span class="chev">▾</span>
+            </div>
+          </div>
+          <div id="outputText" class="output">Your translation will appear here…</div>
+          <audio id="audioPlayer" controls hidden></audio>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn accent" id="downloadBtn">⬇️ MP3</button>
+            <button class="btn" id="copyBtn">📋 Copy</button>
+            <button class="btn" id="exportTxt">📤 Export .txt</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="history" class="card hide">
+      <div class="row">
+        <div class="select" style="max-width:300px">
+          <input id="historySearch" placeholder="Search history…" style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--card-border); background:rgba(255,255,255,.5); color:var(--text)"/>
+        </div>
+        <button id="clearHistory" class="btn ghost">🗑️ Clear history</button>
+      </div>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" class="card hide">
+      <h3 style="margin-top:0">Settings</h3>
+      <div class="row" style="margin-bottom:10px">
+        <label style="display:flex; align-items:center; gap:10px">
+          <input type="checkbox" id="speakOutput" checked/>
+          Speak output (TTS)
+        </label>
+        <label style="display:flex; align-items:center; gap:10px">
+          <input type="checkbox" id="autoPlay" checked/>
+          Autoplay audio
+        </label>
+      </div>
+      <div>
+        <label>Speech speed: <span id="speedVal">1.0x</span></label>
+        <input type="range" id="speechSpeed" min="0.5" max="1.5" step="0.1" value="1" style="width:260px"/>
+      </div>
+      <p style="color:var(--muted); margin-top:12px">Settings are saved locally to your browser.</p>
+    </section>
+  </main>
+
+  <script>
+    // ====== Data from Flask ======
+    const LANGUAGES_FROM_FLASK = {{ languages | tojson }};
+    const LANG_MAP = {};
+    for (const [code, name] of LANGUAGES_FROM_FLASK) LANG_MAP[code] = name;
+
+    // Minimal emoji flag mapping (sane defaults + fallbacks)
+    const FLAG = new Map(Object.entries({
+      en:"🇺🇸", hi:"🇮🇳", ta:"🇮🇳", te:"🇮🇳", kn:"🇮🇳", ml:"🇮🇳", mr:"🇮🇳", gu:"🇮🇳", bn:"🇧🇩",
+      pa:"🇮🇳", ur:"🇵🇰", ar:"🇸🇦", fr:"🇫🇷", de:"🇩🇪", es:"🇪🇸", it:"🇮🇹", pt:"🇵🇹",
+      ru:"🇷🇺", uk:"🇺🇦", ja:"🇯🇵", ko:"🇰🇷", zh:"🇨🇳", "zh-cn":"🇨🇳", "zh-tw":"🇹🇼",
+      id:"🇮🇩", th:"🇹🇭", tr:"🇹🇷", fa:"🇮🇷", vi:"🇻🇳"
+    }));
+
+    // ====== Elements ======
+    const el = id => document.getElementById(id);
+    const sourceLang = el('sourceLang');
+    const targetLang = el('targetLang');
+    const flagSrc = el('flagSrc');
+    const flagDst = el('flagDst');
+    const inputText = el('inputText');
+    const outputText = el('outputText');
+    const translateBtn = el('translateBtn');
+    const micBtn = el('micBtn');
+    const progress = el('progress');
+    const statusPill = el('statusPill');
+    const audioPlayer = el('audioPlayer');
+    const copyBtn = el('copyBtn');
+    const downloadBtn = el('downloadBtn');
+    const exportTxt = el('exportTxt');
+    const swapBtn = el('swapBtn');
+
+    // Sidebar / sections
+    const navButtons = document.querySelectorAll('.nav button');
+    const sections = { home: el('home'), history: el('history'), settings: el('settings') };
+    navButtons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        navButtons.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const to = btn.dataset.section;
+        Object.entries(sections).forEach(([k,node])=>node.classList.toggle('hide', k!==to));
+      });
+    });
+
+    // Theme + quick actions
+    const toggleTheme = el('toggleTheme');
+    const clearAll = el('clearAll');
+    toggleTheme.addEventListener('click', ()=>{
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+    });
+    clearAll.addEventListener('click', ()=>{
+      inputText.value=''; outputText.textContent='Your translation will appear here…';
+      audioPlayer.hidden = true; audioPlayer.src = '';
+      setStatus('Cleared.', 'info');
+    });
+    if(localStorage.getItem('theme')==='dark'){ document.body.classList.add('dark'); }
+
+    // Populate language selects
+    function populateSelects(){
+      sourceLang.innerHTML = `<option value="auto">🌐 Auto Detect</option>`;
+      targetLang.innerHTML = ``;
+      for(const [code, name] of LANGUAGES_FROM_FLASK){
+        const flag = FLAG.get(code) || '🌐';
+        sourceLang.insertAdjacentHTML('beforeend', `<option value="${code}">${flag} ${name}</option>`);
+        targetLang.insertAdjacentHTML('beforeend', `<option value="${code}">${flag} ${name}</option>`);
+      }
+      sourceLang.value = 'en';
+      targetLang.value = 'ta';
+      updateFlags();
+    }
+    function updateFlags(){
+      const src = sourceLang.value;
+      const dst = targetLang.value;
+      flagSrc.textContent = FLAG.get(src) || '🌐';
+      flagDst.textContent = FLAG.get(dst) || '🌐';
+    }
+    populateSelects();
+    sourceLang.addEventListener('change', updateFlags);
+    targetLang.addEventListener('change', updateFlags);
+
+    // Settings
+    const speakOutput = el('speakOutput');
+    const autoPlay = el('autoPlay');
+    const speechSpeed = el('speechSpeed');
+    const speedVal = el('speedVal');
+
+    // Load persisted settings
+    const saved = JSON.parse(localStorage.getItem('translator_settings') || '{}');
+    if(saved.speakOutput !== undefined) speakOutput.checked = saved.speakOutput;
+    if(saved.autoPlay !== undefined) autoPlay.checked = saved.autoPlay;
+    if(saved.speechSpeed) speechSpeed.value = saved.speechSpeed;
+    speedVal.textContent = `${parseFloat(speechSpeed.value).toFixed(1)}x`;
+    speechSpeed.addEventListener('input', ()=>{ speedVal.textContent = `${parseFloat(speechSpeed.value).toFixed(1)}x`; audioPlayer.playbackRate = parseFloat(speechSpeed.value); persistSettings(); });
+    [speakOutput, autoPlay].forEach(x => x.addEventListener('change', persistSettings));
+    function persistSettings(){
+      localStorage.setItem('translator_settings', JSON.stringify({
+        speakOutput: speakOutput.checked,
+        autoPlay: autoPlay.checked,
+        speechSpeed: speechSpeed.value
+      }));
+    }
+
+    // Status
+    function setStatus(text, type='info'){
+      statusPill.textContent = text;
+      statusPill.className = `status ${type}`;
+    }
+
+    // Progress
+    function showProgress(on){ progress.style.display = on ? 'block' : 'none'; }
+
+    // History timeline
+    const timeline = el('timeline');
+    const clearHistory = el('clearHistory');
+    const historySearch = el('historySearch');
+
+    function addHistory(orig, trans, srcCode, dstCode){
+      const time = new Date();
+      const item = document.createElement('div');
+      item.className = 'tl-item';
+      item.dataset.search = `${orig} ${trans}`.toLowerCase();
+
+      const srcName = LANG_MAP[srcCode] || srcCode;
+      const dstName = LANG_MAP[dstCode] || dstCode;
+
+      item.innerHTML = `
+        <div class="tl-time">${time.toLocaleString()}</div>
+        <div class="tl-body">
+          <div class="tl-src">${FLAG.get(srcCode)||'🌐'} ${srcName} → ${FLAG.get(dstCode)||'🌐'} ${dstName}</div>
+          <div style="margin-top:6px"><strong>${orig}</strong></div>
+          <div style="margin-top:6px; opacity:.9">${trans}</div>
+          <div class="filter" style="margin-top:8px">
+            <button class="btn ghost btn-small">Re-use</button>
+            <button class="btn ghost btn-small copy-line">Copy</button>
+          </div>
+        </div>
+      `;
+      item.querySelector('.btn-small')?.addEventListener('click', ()=>{
+        inputText.value = orig;
+        outputText.textContent = trans;
+        navButtons.forEach(b=> b.dataset.section==='home' && b.click());
+      });
+      item.querySelector('.copy-line')?.addEventListener('click', ()=>{
+        navigator.clipboard.writeText(trans);
+        setStatus('Copied from history.', 'info');
+      });
+      timeline.prepend(item);
+      // Keep up to 50 entries
+      while(timeline.children.length > 50) timeline.removeChild(timeline.lastChild);
+      persistHistory();
+    }
+
+    historySearch.addEventListener('input', ()=>{
+      const q = historySearch.value.trim().toLowerCase();
+      for(const child of timeline.children){
+        const match = child.dataset.search?.includes(q);
+        child.style.display = match ? '' : 'none';
+      }
+    });
+
+    clearHistory.addEventListener('click', ()=>{
+      timeline.innerHTML = '';
+      persistHistory();
+      setStatus('History cleared.', 'info');
+    });
+
+    // Persist history in localStorage
+    function persistHistory(){
+      const items = [];
+      for(const node of timeline.children){
+        const body = node.querySelector('.tl-body');
+        const time = node.querySelector('.tl-time')?.textContent || '';
+        const head = body.querySelector('.tl-src')?.textContent || '';
+        const strong = body.querySelector('strong')?.textContent || '';
+        const trans = body.querySelector('div:nth-child(3)')?.textContent || '';
+        items.push({time, head, orig: strong, trans});
+      }
+      localStorage.setItem('translator_history', JSON.stringify(items));
+    }
+    function restoreHistory(){
+      const arr = JSON.parse(localStorage.getItem('translator_history') || '[]');
+      arr.forEach(it=>{
+        // We can’t perfectly restore flags/lang codes from text head — but keep the text
+        const item = document.createElement('div');
+        item.className='tl-item';
+        item.dataset.search = `${it.orig} ${it.trans}`.toLowerCase();
+        item.innerHTML = `
+          <div class="tl-time">${it.time}</div>
+          <div class="tl-body">
+            <div class="tl-src">${it.head}</div>
+            <div style="margin-top:6px"><strong>${it.orig}</strong></div>
+            <div style="margin-top:6px; opacity:.9">${it.trans}</div>
+            <div class="filter" style="margin-top:8px">
+              <button class="btn ghost btn-small">Re-use</button>
+              <button class="btn ghost btn-small copy-line">Copy</button>
+            </div>
+          </div>
+        `;
+        item.querySelector('.btn-small')?.addEventListener('click', ()=>{
+          inputText.value = it.orig; outputText.textContent = it.trans;
+          navButtons.forEach(b=> b.dataset.section==='home' && b.click());
+        });
+        item.querySelector('.copy-line')?.addEventListener('click', ()=>{
+          navigator.clipboard.writeText(it.trans); setStatus('Copied from history.', 'info');
+        });
+        timeline.appendChild(item);
+      });
+    }
+    restoreHistory();
+
+    // Swap languages
+    swapBtn.addEventListener('click', ()=>{
+      const s = sourceLang.value;
+      sourceLang.value = targetLang.value;
+      targetLang.value = s;
+      updateFlags();
+      // Swap text areas for convenience
+      const oldIn = inputText.value;
+      inputText.value = outputText.textContent === 'Your translation will appear here…' ? '' : outputText.textContent;
+      outputText.textContent = oldIn || 'Your translation will appear here…';
+      audioPlayer.hidden = true; audioPlayer.src = '';
+      setStatus('Languages swapped.', 'info');
+    });
+
+    // Translate
+    translateBtn.addEventListener('click', async ()=>{
+      const text = inputText.value.trim();
+      if(!text){ setStatus('Please enter text.', 'warn'); return; }
+
+      showProgress(true); setStatus('Translating…','info');
+      audioPlayer.hidden = true; audioPlayer.src = '';
+
+      const slow = parseFloat(speechSpeed.value) <= 0.8;
+      try{
+        const res = await fetch('/translate', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            text, src_lang: sourceLang.value, dest_lang: targetLang.value,
+            speak_output: speakOutput.checked, slow_speech: slow
+          })
+        });
+        const data = await res.json();
+        outputText.textContent = data.translated_text || 'Translation failed.';
+        setStatus(data.message || 'Done', (data.status || 'info'));
+
+        // Auto-adjust if auto-detect
+        if(sourceLang.value === 'auto' && data.detected_src_lang_code && data.detected_src_lang_code !== 'auto'){
+          sourceLang.value = data.detected_src_lang_code;
+          updateFlags();
+        }
+
+        if (data.audio_url && speakOutput.checked){
+          audioPlayer.src = data.audio_url;
+          audioPlayer.hidden = false;
+          audioPlayer.playbackRate = parseFloat(speechSpeed.value);
+          if (autoPlay.checked){
+            audioPlayer.play().catch(()=> setStatus('Click ▶ to play (autoplay blocked).','warn'));
+          }
+        }
+
+        addHistory(data.original_text || text, data.translated_text || '', sourceLang.value, targetLang.value);
+
+      }catch(err){
+        console.error(err);
+        setStatus('Network/server error. Try again.', 'error');
+        outputText.textContent = 'Translation failed due to an error.';
+      }finally{
+        showProgress(false);
+      }
+    });
+
+    // Copy / Download / Export
+    copyBtn.addEventListener('click', ()=>{
+      const t = outputText.textContent.trim();
+      if(!t || t === 'Your translation will appear here…'){ setStatus('Nothing to copy.','warn'); return; }
+      navigator.clipboard.writeText(t).then(()=> setStatus('Copied translation!','info'));
+    });
+
+    downloadBtn.addEventListener('click', ()=>{
+      if(!audioPlayer.src){ setStatus('No audio to download.','warn'); return; }
+      const a = document.createElement('a');
+      a.href = audioPlayer.src; a.download = `translation_${Date.now()}.mp3`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setStatus('MP3 download started.','info');
+    });
+
+    exportTxt.addEventListener('click', ()=>{
+      const t = outputText.textContent;
+      const blob = new Blob([t], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `translation_${Date.now()}.txt`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      setStatus('.txt exported.','info');
+    });
+
+    // Mic / Speech Recognition
+    if('webkitSpeechRecognition' in window){
+      const recognition = new webkitSpeechRecognition();
+      recognition.continuous = false; recognition.interimResults = false;
+      micBtn.addEventListener('click', ()=>{
+        recognition.lang = sourceLang.value === 'auto' ? 'en' : sourceLang.value;
+        micBtn.classList.add('listening');
+        setStatus('Listening…','info');
+        recognition.start();
+      });
+      recognition.onresult = (e)=>{
+        const transcript = e.results[0][0].transcript;
+        inputText.value = transcript;
+        setStatus('Voice captured. Ready to translate.','info');
+        micBtn.classList.remove('listening');
+      };
+      recognition.onerror = ()=>{
+        setStatus('Mic error or permission denied.','error');
+        micBtn.classList.remove('listening');
+      };
+      recognition.onend = ()=> micBtn.classList.remove('listening');
+    }else{
+      micBtn.disabled = true;
+      micBtn.title = 'Speech Recognition not supported';
+    }
+  </script>
+</body>
+</html>

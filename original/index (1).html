@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Speech Translator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Body and Container Styling */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #e0f2f7; /* Light blue background */
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for theme change */
+        }
+        .dark {
+            background-color: #121212; /* Dark mode background */
+            color: #eee; /* Dark mode text color */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 800px; /* Adjusted max-width */
+            width: 100%;
+            border: 1px solid #d0e7ed;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Space between sections */
+            position: relative; /* For theme toggle button positioning */
+            transition: background-color 0.3s ease, border 0.3s ease; /* Smooth transition for theme change */
+        }
+        body.dark .container {
+            background-color: #1e1e1e; /* Dark mode container */
+            border-color: #333; /* Dark mode border */
+        }
+
+        /* Headings */
+        h1 {
+            color: #004d7a; /* Even darker blue for main heading */
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        body.dark h1 {
+            color: #90caf9; /* Dark mode heading */
+        }
+
+        h2 {
+            color: #007bb5; /* Darker blue for section headings */
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            font-weight: 400;
+        }
+        body.dark h2 {
+            color: #a7d9f7; /* Dark mode sub-heading */
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.95em;
+        }
+        body.dark label {
+            color: #ccc; /* Dark mode label */
+        }
+
+        textarea {
+            width: calc(100% - 22px); /* Account for padding and border */
+            padding: 12px;
+            border: 1px solid #c0e0eb;
+            border-radius: 8px;
+            font-size: 1.1em;
+            color: #333;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            resize: vertical;
+            min-height: 100px;
+            background-color: #f9fcff;
+            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark textarea {
+            background-color: #2a2a2a; /* Dark mode textarea */
+            color: #eee;
+            border-color: #444;
+        }
+
+        textarea:focus {
+            border-color: #0099e6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 153, 230, 0.2);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #c0e0eb;
+            border-radius: 8px;
+            font-size: 1em;
+            color: #333;
+            background-color: #f9fcff;
+            appearance: none; /* Remove default browser styling */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bb5%22%20d%3D%22M287%2C197.3L159.2%2C69.5c-3.4-3.4-8.8-3.4-12.2%2C0L5.4%2C197.3c-3.4%2C3.4-3.4%2C8.8%2C0%2C12.2l12.2%2C12.2c3.4%2C3.4%2C8.8%2C3.4%2C12.2%2C0l112-112l112%2C112c3.4%2C3.4%2C8.8%2C3.4%2C12.2%2C0l12.2-12.2C290.4%2C206.1%2C290.4%2C200.7%2C287%2C197.3z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 12px;
+            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark select {
+            background-color: #2a2a2a; /* Dark mode select */
+            color: #eee;
+            border-color: #444;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23eee%22%20d%3D%22M287%2C197.3L159.2%2C69.5c-3.4-3.4-8.8-3.4-12.2%2C0L5.4%2C197.3c-3.4%2C3.4-3.4%2C8.8%2C0%2C12.2l12.2%2C12.2c3.4%2C3.4%2C8.8%2C3.4%2C12.2%2C0l112-112l112%2C112c3.4%2C3.4%2C8.8%2C3.4%2C12.2%2C0l12.2-12.2C290.4%2C206.1%2C290.4%2C200.7%2C287%2C197.3z%22%2F%3E%3C%2Fsvg%3E'); /* Dark mode custom arrow */
+        }
+        select:focus {
+            border-color: #0099e6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 153, 230, 0.2);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #d0e0eb;
+            border-radius: 5px;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+        body.dark input[type=range] {
+            background: #444;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bb5;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        body.dark input[type=range]::-webkit-slider-thumb {
+            background: #90caf9;
+            border-color: #1e1e1e;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 15px; /* Space between buttons */
+            margin-top: 25px;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, color 0.3s ease;
+            flex-grow: 1; /* Allow buttons to grow */
+            min-width: 120px; /* Minimum width for buttons */
+        }
+
+        button.primary {
+            background-color: #007bb5; /* Blue */
+            color: white;
+        }
+
+        button.primary:hover:not(:disabled) {
+            background-color: #005f92;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background-color: #6c757d; /* Grey */
+            color: white;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        button.accent {
+            background-color: #28a745; /* Green */
+            color: white;
+        }
+
+        button.accent:hover:not(:disabled) {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            color: #999;
+        }
+        body.dark button:disabled {
+            background-color: #333;
+            color: #666;
+        }
+
+        /* Icon Buttons (for theme toggle, copy, swap) */
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em; /* Adjust icon size */
+            padding: 5px;
+            color: #007bb5; /* Icon color */
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+        body.dark .icon-button {
+            color: #90caf9; /* Dark mode icon color */
+        }
+
+        .icon-button:hover:not(:disabled) {
+            color: #004d7a;
+            transform: scale(1.05);
+        }
+        body.dark .icon-button:hover:not(:disabled) {
+            color: #b3e5fc;
+        }
+
+        .icon-button:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        body.dark .icon-button:disabled {
+            color: #555;
+        }
+
+        /* Language Swap Button specific style */
+        .swap-button {
+            font-size: 1.2em;
+            margin: 0 10px; /* Space around the swap button */
+            align-self: center; /* Vertically align with dropdowns if flexed */
+        }
+        
+        /* Language Select Grouping */
+        .language-select-group {
+            display: flex;
+            align-items: flex-end; /* Align bottom of selects */
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .language-select-group > div {
+            flex-grow: 1;
+            min-width: 180px; /* Ensure select boxes don't get too small */
+        }
+
+        /* Output Section */
+        .output-section {
+            background-color: #e9f5f9;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #d0e7ed;
+            min-height: 120px; /* Adjusted min-height */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: background-color 0.3s ease, border 0.3s ease;
+        }
+        body.dark .output-section {
+            background-color: #2a2a2a;
+            border-color: #444;
+        }
+
+        .output-text {
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            white-space: pre-wrap; /* Preserve whitespace and line breaks */
+            word-wrap: break-word; /* Break long words */
+        }
+        body.dark .output-text {
+            color: #ddd;
+        }
+
+        .output-meta {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: right;
+        }
+        body.dark .output-meta {
+            color: #aaa;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            margin-bottom: 25px; /* Add margin-bottom */
+            font-weight: bold;
+            font-size: 0.95em;
+            text-align: center;
+        }
+
+        .status-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .status-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        body.dark .status-message.info { background-color: #0c343d; color: #a8dadc; border-color: #1e4d58; }
+        body.dark .status-message.error { background-color: #4b1216; color: #f2a7a7; border-color: #6a1a1e; }
+        body.dark .status-message.warning { background-color: #4b3d0b; color: #f0e68c; border-color: #6f5d1e; }
+
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #007bb5;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+            margin: 20px auto; /* Center the spinner */
+        }
+        body.dark .spinner {
+            border-left-color: #90caf9;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Audio Player */
+        audio {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+            background-color: #f0f8ff;
+            outline: none;
+        }
+        body.dark audio {
+            background-color: #3a3a3a;
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: #e0f2f7; /* Light blue */
+        }
+        body.dark audio::-webkit-media-controls-panel {
+            background-color: #4a4a4a;
+        }
+        audio::-webkit-media-controls-play-button {
+            background-color: #007bb5; /* Darker blue */
+            border-radius: 50%;
+        }
+        body.dark audio::-webkit-media-controls-play-button {
+            background-color: #90caf9;
+        }
+        audio::-webkit-media-controls-current-time-display,
+        audio::-webkit-media-controls-time-remaining-display {
+            color: #333;
+        }
+        body.dark audio::-webkit-media-controls-current-time-display,
+        body.dark audio::-webkit-media-controls-time-remaining-display {
+            color: #eee;
+        }
+        audio::-webkit-media-controls-timeline {
+            background-color: #c0e0eb;
+            border-radius: 5px;
+        }
+        body.dark audio::-webkit-media-controls-timeline {
+            background-color: #5a5a5a;
+        }
+        audio::-webkit-media-controls-volume-slider {
+            background-color: #c0e0eb;
+            border-radius: 5px;
+        }
+        body.dark audio::-webkit-media-controls-volume-slider {
+            background-color: #5a5a5a;
+        }
+
+        /* New styles for voice options group */
+        .voice-options-group {
+            background-color: #f7fbfc;
+            border: 1px solid #e0f0f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        body.dark .voice-options-group {
+            background-color: #232323;
+            border-color: #383838;
+        }
+
+        .voice-options-group h3 {
+            color: #00608d;
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+        body.dark .voice-options-group h3 {
+            color: #bbdefb;
+        }
+
+        .inline-checkbox {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .inline-checkbox input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2); /* Make checkbox slightly larger */
+        }
+        .inline-checkbox label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+
+        /* Translation History */
+        .history-section {
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 150px; /* Increased history height */
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            margin-top: 20px;
+            transition: background-color 0.3s ease, border 0.3s ease;
+        }
+        body.dark .history-section {
+            background-color: #2a2a2a;
+            border-color: #444;
+        }
+
+        .history-item {
+            cursor: pointer;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 0.95em;
+            color: #444;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        body.dark .history-item {
+            color: #bbb;
+            border-color: #3a3a3a;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:hover {
+            background-color: #e0f2f7;
+            color: #004d7a;
+        }
+        body.dark .history-item:hover {
+            background-color: #333;
+            color: #90caf9;
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            .btn-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            button {
+                width: 100%;
+            }
+            .language-select-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .swap-button {
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="themeToggleBtn" class="icon-button" title="Toggle Theme">&#9790;</button>
+
+        <h1>&#127758; Dynamic Speech Translator</h1>
+
+        <div class="status-message info" id="statusMessage">
+            Enter text, select languages, and click 'Translate'.
+        </div>
+
+        <div class="form-group">
+            <label for="inputText">Enter Text:</label>
+            <textarea id="inputText" placeholder="Type or paste your text here..."></textarea>
+            <div class="btn-group">
+                <button id="voiceInputBtn" class="secondary">🎤 Voice Input</button>
+                <button id="clearBtn" class="secondary">🧹 Clear</button>
+            </div>
+        </div>
+
+        <div class="language-select-group">
+            <div class="form-group">
+                <label for="sourceLangSelect">From Language:</label>
+                <select id="sourceLangSelect">
+                    </select>
+            </div>
+
+            <button id="swapLanguagesBtn" class="icon-button swap-button">&#8644;</button>
+
+            <div class="form-group">
+                <label for="targetLangSelect">To Language:</label>
+                <select id="targetLangSelect">
+                    </select>
+            </div>
+        </div>
+        
+        <div class="voice-options-group">
+            <h3>Voice Output Options:</h3>
+            <div class="form-group inline-checkbox">
+                <input type="checkbox" id="speakOutputCheckbox" checked>
+                <label for="speakOutputCheckbox">Enable Voice Output</label>
+            </div>
+
+            <div class="form-group inline-checkbox">
+                <input type="checkbox" id="autoplayAudioCheckbox" checked>
+                <label for="autoplayAudioCheckbox">Auto-play Audio</label>
+            </div>
+
+            <div class="form-group">
+                <label for="speechSpeed">Speech Speed (0.5x - 1.5x):</label>
+                <input type="range" id="speechSpeed" min="0.5" max="1.5" step="0.1" value="1">
+            </div>
+        </div>
+
+
+        <div class="btn-group">
+            <button id="translateBtn" class="primary">Translate Text</button>
+            <button id="downloadBtn" class="accent">⬇️ Download MP3</button>
+            <button id="copyBtn" class="secondary">📋 Copy</button>
+        </div>
+
+        <div class="spinner" id="loadingSpinner"></div>
+
+        <div class="output-section">
+            <div id="translatedOutputDisplay" class="output-text">Your translated text will appear here.</div>
+            <div id="translationMeta" class="output-meta"></div>
+            <audio id="audioPlayer" controls hidden></audio>
+        </div>
+
+        <h3>Translation History</h3>
+        <div id="translationHistory" class="history-section"></div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const inputText = document.getElementById('inputText');
+        const sourceLangSelect = document.getElementById('sourceLangSelect');
+        const targetLangSelect = document.getElementById('targetLangSelect');
+        const speakOutputCheckbox = document.getElementById('speakOutputCheckbox');
+        const autoplayAudioCheckbox = document.getElementById('autoplayAudioCheckbox');
+        const speechSpeedInput = document.getElementById('speechSpeed'); // Renamed from speechSpeed
+        const translateBtn = document.getElementById('translateBtn');
+        const translatedOutputDisplay = document.getElementById('translatedOutputDisplay');
+        const translationMeta = document.getElementById('translationMeta');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const statusMessageDiv = document.getElementById('statusMessage');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const swapLanguagesBtn = document.getElementById('swapLanguagesBtn');
+        const voiceInputBtn = document.getElementById('voiceInputBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const historyDiv = document.getElementById('translationHistory');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+
+        // Languages object (populated by Flask, but fallback if not)
+        // This 'langs' object is now the one passed from Flask
+        const LANGUAGES_FROM_FLASK = {{ languages | tojson }};
+        const LANG_MAP = {};
+        for (const [code, name] of LANGUAGES_FROM_FLASK) {
+            LANG_MAP[code] = name;
+        }
+
+        // --- Initial setup ---
+        function populateLanguageSelects() {
+            sourceLangSelect.innerHTML = '<option value="auto">Auto Detect</option>';
+            targetLangSelect.innerHTML = '';
+
+            for (const [code, name] of LANGUAGES_FROM_FLASK) {
+                const srcOption = document.createElement('option');
+                srcOption.value = code;
+                srcOption.textContent = name;
+                sourceLangSelect.appendChild(srcOption);
+
+                const destOption = document.createElement('option');
+                destOption.value = code;
+                destOption.textContent = name;
+                targetLangSelect.appendChild(destOption);
+            }
+            sourceLangSelect.value = 'en'; // Default source
+            targetLangSelect.value = 'ta'; // Default target
+        }
+        populateLanguageSelects(); // Call on page load
+
+        // Load theme preference
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark');
+            }
+            // Apply initial speech speed to audio player
+            audioPlayer.playbackRate = parseFloat(speechSpeedInput.value);
+        });
+
+        // --- Utility Functions ---
+
+        function displayStatus(message, type = 'info') {
+            statusMessageDiv.textContent = message;
+            statusMessageDiv.className = `status-message ${type}`;
+        }
+
+        function toggleLoading(isLoading) {
+            translateBtn.disabled = isLoading;
+            voiceInputBtn.disabled = isLoading; // Disable voice input during translation
+            loadingSpinner.style.display = isLoading ? 'block' : 'none';
+            if (isLoading) {
+                displayStatus('Translating...', 'info');
+                translatedOutputDisplay.textContent = '...'; // Show a simple loading indicator in output
+                translationMeta.textContent = '';
+                audioPlayer.hidden = true;
+                audioPlayer.pause();
+                audioPlayer.src = '';
+                downloadBtn.disabled = true; // Disable download button during translation
+                copyBtn.disabled = true; // Disable copy button during translation
+            } else {
+                downloadBtn.disabled = false;
+                copyBtn.disabled = false;
+            }
+        }
+
+        function addToHistory(originalText, translatedText) {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `<strong>${originalText}</strong> &rarr; ${translatedText}`;
+            item.onclick = () => {
+                inputText.value = originalText;
+                // Optionally, trigger translation of this historical item
+                // translateBtn.click();
+            };
+            // Prepend to show most recent at top
+            if (historyDiv.firstChild) {
+                historyDiv.insertBefore(item, historyDiv.firstChild);
+            } else {
+                historyDiv.appendChild(item);
+            }
+            // Limit history items (e.g., to 10)
+            while (historyDiv.children.length > 10) {
+                historyDiv.removeChild(historyDiv.lastChild);
+            }
+        }
+
+        // --- Event Listeners ---
+
+        translateBtn.addEventListener('click', async () => {
+            const text = inputText.value.trim();
+            if (!text) {
+                displayStatus('Please enter text to translate.', 'warning');
+                return;
+            }
+
+            const srcLang = sourceLangSelect.value;
+            const destLang = targetLangSelect.value;
+            const speakOutput = speakOutputCheckbox.checked;
+            const currentSpeed = parseFloat(speechSpeedInput.value);
+
+            // gTTS 'slow' parameter is boolean, so we map the range to it
+            const slowSpeechForGtts = currentSpeed <= 0.8; 
+
+            toggleLoading(true);
+
+            try {
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        src_lang: srcLang,
+                        dest_lang: destLang,
+                        speak_output: speakOutput,
+                        slow_speech: slowSpeechForGtts // Send boolean to backend
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Translation response:", data);
+
+                translatedOutputDisplay.textContent = data.translated_text;
+
+                let srcDisplay = data.src_lang_name;
+                // If auto-detect was used and a language was detected, update source select
+                if (srcLang === 'auto' && data.detected_src_lang_code && data.detected_src_lang_code !== 'auto') {
+                    sourceLangSelect.value = data.detected_src_lang_code;
+                    srcDisplay = `${LANG_MAP[data.detected_src_lang_code] || data.detected_src_lang_code} (Auto-detected)`;
+                }
+                
+                translationMeta.textContent = `Original: ${srcDisplay} | Translated: ${data.dest_lang_name}`;
+                
+                if (data.audio_url && speakOutput) { // Check speakOutput preference
+                    audioPlayer.src = data.audio_url;
+                    audioPlayer.hidden = false;
+                    audioPlayer.playbackRate = currentSpeed; // Apply speed here
+                    
+                    if (autoplayAudioCheckbox.checked) { // Check autoplay preference
+                        audioPlayer.play().catch(err => {
+                            console.error("Audio playback error:", err);
+                            displayStatus("Audio playback blocked by browser (e.g., auto-play policy). Please click play manually.", "warning");
+                        });
+                    } else {
+                        displayStatus("Translation successful! Click play on the audio player.", "info");
+                    }
+                } else {
+                    audioPlayer.hidden = true;
+                }
+                
+                displayStatus(data.message, data.status);
+                addToHistory(data.original_text, data.translated_text);
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                displayStatus('Translation failed: Network error or server issue. Please try again.', 'error');
+                translatedOutputDisplay.textContent = 'Translation failed due to an error.';
+                translationMeta.textContent = '';
+                audioPlayer.hidden = true;
+            } finally {
+                toggleLoading(false);
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            inputText.value = '';
+            translatedOutputDisplay.textContent = 'Your translated text will appear here.';
+            translationMeta.textContent = '';
+            audioPlayer.hidden = true;
+            audioPlayer.pause();
+            audioPlayer.src = '';
+            displayStatus('Input cleared.', 'info');
+            sourceLangSelect.value = 'en'; // Reset source to default
+            targetLangSelect.value = 'ta'; // Reset target to default
+            speakOutputCheckbox.checked = true; // Reset speak output
+            autoplayAudioCheckbox.checked = true; // Reset autoplay
+            speechSpeedInput.value = 1; // Reset speech speed
+            audioPlayer.playbackRate = 1; // Reset audio player speed
+            downloadBtn.disabled = true; // Disable download button after clear
+            copyBtn.disabled = true; // Disable copy button after clear
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = translatedOutputDisplay.textContent;
+            if (textToCopy && textToCopy !== 'Your translated text will appear here.' && !textToCopy.startsWith('Translation failed') && !textToCopy.startsWith('Error')) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    displayStatus('Translated text copied to clipboard!', 'info');
+                }).catch(err => {
+                    console.error('Failed to copy text:', err);
+                    displayStatus('Failed to copy text. Please copy manually.', 'error');
+                });
+            } else {
+                displayStatus('Nothing to copy.', 'warning');
+            }
+        });
+
+        swapLanguagesBtn.addEventListener('click', () => {
+            const currentSource = sourceLangSelect.value;
+            const currentTarget = targetLangSelect.value;
+
+            sourceLangSelect.value = currentTarget;
+            targetLangSelect.value = currentSource;
+
+            const tempText = inputText.value;
+            inputText.value = translatedOutputDisplay.textContent;
+            translatedOutputDisplay.textContent = tempText === 'Your translated text will appear here.' ? '' : tempText;
+            
+            translationMeta.textContent = '';
+            audioPlayer.hidden = true;
+            audioPlayer.pause();
+            audioPlayer.src = '';
+
+            displayStatus('Languages swapped. Please re-translate.', 'info');
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (audioPlayer.src && audioPlayer.src !== window.location.href) { // Ensure there's an actual audio source
+                const a = document.createElement('a');
+                a.href = audioPlayer.src;
+                a.download = `translation_${Date.now()}.mp3`; // Unique filename
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                displayStatus('MP3 download initiated.', 'info');
+            } else {
+                displayStatus('No audio available to download.', 'warning');
+            }
+        });
+
+        // Update audio playback rate dynamically as slider changes
+        speechSpeedInput.addEventListener('input', () => {
+            audioPlayer.playbackRate = parseFloat(speechSpeedInput.value);
+            displayStatus(`Speech speed set to ${speechSpeedInput.value}x.`, 'info');
+        });
+
+        // Theme Toggle
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            displayStatus('Theme toggled.', 'info');
+        });
+
+        // Web Speech API for Voice Input
+        if ('webkitSpeechRecognition' in window) {
+            const SpeechRecognition = window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false; // Set to true for continuous recognition
+            recognition.lang = sourceLangSelect.value;
+            recognition.interimResults = false; // Set to true for live interim results
+
+            recognition.onstart = () => {
+                displayStatus('Listening... Speak now.', 'info');
+                voiceInputBtn.disabled = true;
+                voiceInputBtn.innerHTML = '🎤 Listening...';
+                inputText.value = ''; // Clear input field when starting voice input
+                translatedOutputDisplay.textContent = ''; // Clear translated output
+                audioPlayer.hidden = true;
+                audioPlayer.pause();
+                audioPlayer.src = '';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                inputText.value = transcript;
+                displayStatus('Voice input received. Translating...', 'info');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.innerHTML = '🎤 Voice Input';
+                translateBtn.click(); // Trigger translation automatically after speech
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                let errorMessage = 'Voice input error. ';
+                if (event.error === 'not-allowed') {
+                    errorMessage += 'Please allow microphone access in your browser settings.';
+                } else if (event.error === 'no-speech') {
+                    errorMessage += 'No speech detected. Please try again.';
+                } else if (event.error === 'network') {
+                    errorMessage += 'Network error. Check your connection.';
+                } else {
+                    errorMessage += `Error: ${event.error}`;
+                }
+                displayStatus(errorMessage, 'error');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.innerHTML = '🎤 Voice Input';
+            };
+
+            recognition.onend = () => {
+                console.log('Speech recognition ended.');
+                voiceInputBtn.disabled = false;
+                voiceInputBtn.innerHTML = '🎤 Voice Input';
+            };
+
+            voiceInputBtn.addEventListener('click', () => {
+                recognition.lang = sourceLangSelect.value; // Set language based on current selection
+                recognition.start();
+            });
+
+            // Update recognition language if source language selection changes
+            sourceLangSelect.addEventListener('change', () => {
+                recognition.lang = sourceLangSelect.value;
+            });
+
+        } else {
+            voiceInputBtn.disabled = true;
+            voiceInputBtn.textContent = 'Voice Input Not Supported';
+            displayStatus('Speech Recognition not supported in this browser (requires Chrome/Edge).', 'warning');
+            console.warn('Web Speech API (webkitSpeechRecognition) not found in this browser.');
+        }
+
+        // Initially disable download/copy buttons
+        downloadBtn.disabled = true;
+        copyBtn.disabled = true;
+    </script>
+</body>
+</html>
